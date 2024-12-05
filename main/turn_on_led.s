@@ -1,10 +1,19 @@
-.global turn_on_led   
+.global blink_led
 .global init_led  
 
 .text
 
-# clock @80MHz
+# general properties :
+# clock esp32c3 - @80MHz
+# base GPIO : 0x60004000
+# base IO MUX : 0x60009000
 
+
+# a2 - register
+# t1 - value to load in the register
+
+# configure pin 8 as an output
+# no inputs neither ouptus
 init_led :
 
 	addi sp, sp, -4
@@ -18,7 +27,7 @@ init_led :
 
 	li t5, 0xffff0084
 
-	# Register : IO_MUX_GPIO8_Reg (0x0004+4*8)
+	# Register : IO_MUX_GPIO8_Reg (0x0004+4*8) : CONFIG MUX
 	li a2, 0x60009024
     lw t1, 0(a2)
 	ori t1, t1, 0x00000084
@@ -31,7 +40,7 @@ init_led :
     ori t1, t1, 0x0100
     sw t1, 0(a2)
 
-	# turn off pin 8
+	# Register : GPIO_OUT_W1TC_REG (0x000c) : RESET OUT
 	li a2, 0x6000400c
 	lw t1, 0(a2)
 	ori t1, t1, 0x0100
@@ -43,48 +52,61 @@ init_led :
 
 
 
-turn_on_led :
+# a2 - adress of the register
+# t1 - value to load in the register
 
-	addi sp, sp, -4
-	sw ra, 0(sp)
+# input : 
+# a0 - number of times that the pin must turn on and off
+# output :
+# nothing
+blink_led :
 
-	add t4, a0, x0
-	beq t4, x0, pause
+	addi sp, sp, -8
+	sw ra, 4(sp)
+	sw a0, 0(sp)
 
-	boucle :
-		addi t4, t4, -1
+	# Check if a0 is 0. If yes add 1s delay and return
+	beq a0, x0, pause
 
-		# Register 5.4. GPIO_OUT_W1TC_REG (0x0008) : RESET OUT
+	# Loop to make the pin blink a0 times
+	loop :
+		addi a0, a0, -1
+
+		# Register 5.4. GPIO_OUT_W1TC_REG (0x0008) : SET OUT
 		li a2, 0x60004008
 		lw t1, 0(a2)
 		ori t1, t1, 0x0100
 		sw t1, 0(a2)
 
-		li t0, 27000000       # Charger une grande valeur dans le registre t0 (le nombre d'itérations)
+		# delay loop (approx 1s)
+		li t0, 27000000
 		delay_loop1:
-			addi t0, t0, -1      # Décrémenter t0
-			bnez t0, delay_loop1  # Boucler jusqu'à ce que t0 atteigne zéro
+			addi t0, t0, -1
+			bnez t0, delay_loop1
 
+		# Register 5.4. GPIO_OUT_W1TC_REG (0x000c) : RESET OUT
 		li a2, 0x6000400c
 		lw t1, 0(a2)
 		ori t1, t1, 0x0100
 		sw t1, 0(a2)
 
-		li t0, 27000000       # Charger une grande valeur dans le registre t0 (le nombre d'itérations)
+		# delay loop (approx 1s)
+		li t0, 27000000
 		delay_loop2:
-			addi t0, t0, -1      # Décrémenter t0
-			bnez t0, delay_loop2  # Boucler jusqu'à ce que t0 atteigne zéro
+			addi t0, t0, -1
+			bnez t0, delay_loop2
 
-		beq t4, x0, end
-		j boucle 
+		beq a0, x0, end
+		j loop 
 
 	pause :
-	li t0, 27000000       # Charger une grande valeur dans le registre t0 (le nombre d'itérations)
+	li t0, 27000000
 	delay_loop_pause:
-		addi t0, t0, -1      # Décrémenter t0
-		bnez t0, delay_loop_pause  # Boucler jusqu'à ce que t0 atteigne zéro
+		addi t0, t0, -1 
+		bnez t0, delay_loop_pause
 	
 	end :
-	addi sp, sp, 4
+	lw a0, 0(sp)
+	addi sp, sp, 8
 	jalr ra
 
