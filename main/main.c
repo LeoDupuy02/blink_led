@@ -19,12 +19,13 @@ void app_main(void)
 
     /* initialize counter */
     int i = 0;
+    int a;
 
     /* infinite loop */
     while ( 1 )
     {
         if(i < N){
-            int a = read_pin();
+            a = read_pin();
             if( a==0 ){
                 new_term(ptr,i);
                 i += 1;

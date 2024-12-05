@@ -75,19 +75,20 @@ new_term :
 	beq a1, t1, second_term
 
 	# get adresses of u_n+1, u_n, u_n-1
-	li t5, 4
-	mul t1, a1, t5
-	mul t2, a1, t5
-	add t4, a0, t2
-	addi t1, t1, -4
+	li a3, 4
+	li a4, 8
+	mul t1, a1, a3
+	mul t2, a1, a3
+	add t4, a0, t1
+	sub t1, t1, a3
 	add t1, a0, t1
-	addi t2, t2, -8
+	sub t2, t2, a4
 	add t2, a0, t2
 
 	# get and store u_n+1 value
-	lw t1, 0(t1)
-	lw t2, 0(t2)
-	add a0, t1, t2
+	lw t5, 0(t1)
+	lw t6, 0(t2)
+	add a0, t5, t6
 	sw a0, 0(t4)
 	
 	# make the led blink a0 times
@@ -106,37 +107,37 @@ new_term :
 
 	blink_led :
 
-		# Loop to make the pin blink a0 times
-		loop :
+	# Loop to make the pin blink a0 times
+	loop :
 
-			addi a0, a0, -1
+		addi a0, a0, -1
 
-			# Register 5.4. GPIO_OUT_W1TC_REG (0x0008) : SET OUT
-			li a2, 0x60004008
-			lw a1, 0(a2)
-			ori a1, a1, 0x0100
-			sw a1, 0(a2)
+		# Register 5.4. GPIO_OUT_W1TC_REG (0x0008) : SET OUT
+		li a2, 0x60004008
+		lw a1, 0(a2)
+		ori a1, a1, 0x0100
+		sw a1, 0(a2)
 
-			# delay loop (approx 1s)
-			li t0, 27000000
-			delay_loop1:
-				addi t0, t0, -1
-				bnez t0, delay_loop1
+		# delay loop (approx 1s)
+		li t0, 27000000
+		delay_loop1:
+			addi t0, t0, -1
+			bnez t0, delay_loop1
 
-			# Register 5.4. GPIO_OUT_W1TC_REG (0x000c) : RESET OUT
-			li a2, 0x6000400c
-			lw a1, 0(a2)
-			ori a1, a1, 0x0100
-			sw a1, 0(a2)
+		# Register 5.4. GPIO_OUT_W1TC_REG (0x000c) : RESET OUT
+		li a2, 0x6000400c
+		lw a1, 0(a2)
+		ori a1, a1, 0x0100
+		sw a1, 0(a2)
 
-			# delay loop (approx 1s)
-			li t0, 27000000
-			delay_loop2:
-				addi t0, t0, -1
-				bnez t0, delay_loop2
+		# delay loop (approx 1s)
+		li t0, 27000000
+		delay_loop2:
+			addi t0, t0, -1
+			bnez t0, delay_loop2
 
-			beq a0, x0, end
-			j loop
+		beq a0, x0, end
+		j loop
 
 	pause :
 		li t0, 27000000
